@@ -77,7 +77,7 @@ app.post("/login", async (req, res) => {
         const useremail = await Register.findOne({
             email
         });
-        const isMatch = await bcrypt.compare(password, useremail);
+        const isMatch = await bcrypt.compare(password, useremail.password);
 
         //TODO: Generate Token in login 
         const token = await useremail.generateAuthToken(); //Here useremail is also a instance of Register so we use useremail instead of registerEmployee because it's not defined here 

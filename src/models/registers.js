@@ -1,3 +1,4 @@
+require("dotenv").config();
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -45,8 +46,8 @@ const employeeSchema = new mongoose.Schema({
     }]
 });
 
-// TODO: .statics() for static methods and .methods() for instance methods 
-employeeSchema.method.generateAuthToken = async function () { //We use this keyword so we can't use fat arrow function
+// TODO .statics() for static methods and .methods() for instance methods 
+employeeSchema.methods.generateAuthToken = async function () { //We use this keyword so we can't use fat arrow function here
     try {
         const token = jwt.sign({
             _id: this._id
@@ -61,13 +62,12 @@ employeeSchema.method.generateAuthToken = async function () { //We use this keyw
     }
 }
 
-
 //OPTIMIZE: we use "save" because there is registerEmployee.save() method 
 //OPTIMIZE: It's a middleware and we convert password into hash 
 employeeSchema.pre("save", async function (next) {
     if (this.isModified("password")) {
         this.password = await bcrypt.hash(this.password, 10);
-        this.confirmpassword = await bcrypt.hash(this.password, 10); //TODO: We wouldn't able to see confirmpassword in db
+        this.confirmpassword = await bcrypt.hash(this.password, 10);
     }
     next();
 });
