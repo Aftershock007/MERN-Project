@@ -57,6 +57,13 @@ app.post("/register", async (req, res) => {
             // OPTIMIZE: Generate Token in registration 
             const token = await registerEmployee.generateAuthToken();
 
+            //OPTIMIZE: The res.cookie() function is used to set the cookie name to value 
+            res.cookie("jwt", token, {
+                expires: new Date(Date.now() + 3000),
+                httpOnly: true,
+                // secure: true
+            });
+
             const registered = await registerEmployee.save();
             res.status(201).render("index");
         } else {
@@ -75,12 +82,19 @@ app.post("/login", async (req, res) => {
 
         //OPTIMIZE: Password in DataBase 
         const useremail = await Register.findOne({
-            email
+            email: email
         });
         const isMatch = await bcrypt.compare(password, useremail.password);
 
         //TODO: Generate Token in login 
         const token = await useremail.generateAuthToken(); //Here useremail is also a instance of Register so we use useremail instead of registerEmployee because it's not defined here 
+
+        //OPTIMIZE: Cookies in login page
+        res.cookie("JWT", token, {
+            expires: new Date(Date.now() + 5000),
+            httpOnly: true,
+            // secure: true
+        });
 
         if (isMatch) {
             res.status(201).render("index");
@@ -88,7 +102,7 @@ app.post("/login", async (req, res) => {
             res.send("Invalid Login Details");
         }
     } catch (err) {
-        res.status(400).send("Invalid Login Details");
+        res.status(400).send("Invalid Password Details");
     }
 });
 

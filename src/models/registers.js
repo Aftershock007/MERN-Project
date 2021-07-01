@@ -50,7 +50,7 @@ const employeeSchema = new mongoose.Schema({
 employeeSchema.methods.generateAuthToken = async function () { //We use this keyword so we can't use fat arrow function here
     try {
         const token = jwt.sign({
-            _id: this._id
+            _id: this._id.toString()
         }, process.env.SECRET_KEY);
         this.tokens = this.tokens.concat({
             token: token
@@ -67,10 +67,11 @@ employeeSchema.methods.generateAuthToken = async function () { //We use this key
 employeeSchema.pre("save", async function (next) {
     if (this.isModified("password")) {
         this.password = await bcrypt.hash(this.password, 10);
-        this.confirmpassword = await bcrypt.hash(this.password, 10);
+        this.confirmpassword = await bcrypt.hash(this.confirmpassword, 10);
     }
     next();
 });
+
 
 const Register = new mongoose.model("Register", employeeSchema);
 module.exports = Register;
