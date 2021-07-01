@@ -1,15 +1,24 @@
 require("dotenv").config();
 const express = require("express");
 const app = express();
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const path = require("path");
+const cookieParser = require("cookie-parser");
 const hbs = require("hbs");
+const path = require("path");
+
 require("./db/conn");
 const Register = require("./models/registers");
+const auth = require("./middleware/auth");
+const {
+    read
+} = require("fs");
 
 const port = process.env.PORT || 8000;
 
-// app.use(express.json()); //TODO: When we add data from postman then we need to add this 
+//OPTIMIZE: All Middlewares list 
+app.use(express.json()); //TODO: When we add data from postman then we need to add this 
+app.use(cookieParser());
 app.use(express.urlencoded({
     extended: false
 })); //TODO: When we add data from browser form then we need to add this 
@@ -32,6 +41,28 @@ app.get("/login", (req, res) => {
 });
 app.get("/register", (req, res) => {
     res.render("register");
+});
+app.get("/secret", auth, (req, res) => {
+    res.render("secret");
+});
+app.get("/logout", auth, async (req, res) => {
+    try {
+        // TODO: Remove token from DB (Logout from only recent devices) 
+        req.user.tokens = req.user.tokens.filter((currElement) => {
+            return currElement.token !== req.token;
+        });
+
+        // TODO: Remove token from DB (Logout from all devices) 
+        req.user.tokens = [];
+
+        // TODO: Remove the cookie from the website 
+        res.clearCookie("jwt");
+
+        await req.user.save();
+        res.render("login");
+    } catch (err) {
+        res.status(500).send(err);
+    }
 });
 
 //TODO: Registration Check 
@@ -59,7 +90,7 @@ app.post("/register", async (req, res) => {
 
             //OPTIMIZE: The res.cookie() function is used to set the cookie name to value 
             res.cookie("jwt", token, {
-                expires: new Date(Date.now() + 3000),
+                expires: new Date(Date.now() + 60000),
                 httpOnly: true,
                 // secure: true
             });
@@ -90,8 +121,8 @@ app.post("/login", async (req, res) => {
         const token = await useremail.generateAuthToken(); //Here useremail is also a instance of Register so we use useremail instead of registerEmployee because it's not defined here 
 
         //OPTIMIZE: Cookies in login page
-        res.cookie("JWT", token, {
-            expires: new Date(Date.now() + 5000),
+        res.cookie("jwt", token, {
+            expires: new Date(Date.now() + 60000),
             httpOnly: true,
             // secure: true
         });
